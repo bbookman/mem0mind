@@ -27,9 +27,7 @@
     }
   },
   "markdown_directories": [
-    "/Users/brucebookman/Documents/conversations",
-    "/Users/brucebookman/Documents/notes",
-    "/Users/brucebookman/Documents/journal"
+    "some_directory",
   ],
   "processing_options": {
     "recursive": true,
@@ -44,8 +42,14 @@
     "response_timeout": 60
   },
   "logging": {
-    "level": "INFO",
-    "file": "memory_app.log",
-    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    "level": "DEBUG",
+    "directory": "logs",
+    "rotation": {
+      "max_bytes": 52428800,
+      "backup_count": 30,
+      "when": "midnight",
+      "interval": 1
+    },
+    "format": "%(asctime)s | %(name)s | %(levelname)s | %(filename)s:%(lineno)d | %(funcName)s | %(message)s"
   }
 }
