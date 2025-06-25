@@ -17,6 +17,15 @@ import time
 from pathlib import Path
 
 
+def wait_for_indexing(manager, user, timeout=10):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if manager.get_all_memories(user).get('results', []):
+            return True
+        time.sleep(0.5)
+    return False
+
+
 @pytest.mark.integration
 @pytest.mark.requires_services
 class TestRealMemoryOperations:
@@ -33,7 +42,7 @@ class TestRealMemoryOperations:
             result = manager.add_fact(fact, "test_user")
             if result and result.get('results'):
                 added_facts.append(result['results'][0]['memory'])
-            time.sleep(0.5)  # Small delay to prevent rate limiting
+            wait_for_indexing(manager, "test_user")
         
         # Verify at least some facts were added
         assert len(added_facts) > 0, "No facts were successfully added"
@@ -53,7 +62,7 @@ class TestRealMemoryOperations:
         # Add some facts first
         for fact in facts:
             manager.add_fact(fact, "test_user")
-            time.sleep(0.5)
+            wait_for_indexing(manager, "test_user")
         
         # Test search functionality
         search_results = manager.search_memories("food preferences", "test_user")
@@ -78,7 +87,7 @@ class TestRealMemoryOperations:
         
         # Add a simple fact
         manager.add_fact("Test user loves pizza", "test_user")
-        time.sleep(1)  # Wait for indexing
+        wait_for_indexing(manager, "test_user")
         
         # Test chat
         response = manager.chat("What do I like to eat?", "test_user")
@@ -101,7 +110,7 @@ class TestRealMemoryOperations:
         test_facts = ["Test fact 1", "Test fact 2", "Test fact 3"]
         for fact in test_facts:
             manager.add_fact(fact, "test_user")
-            time.sleep(0.3)
+            wait_for_indexing(manager, "test_user")
         
         # Verify facts were added
         all_memories = manager.get_all_memories("test_user")
@@ -185,7 +194,7 @@ class TestRealMarkdownProcessing:
             total_facts, added_facts = processor.process_file(temp_file, "test_user")
             
             assert added_facts > 0, "Should add facts from markdown"
-            time.sleep(2)  # Wait for indexing
+            wait_for_indexing(real_memory_manager, "test_user")
             
             # Test chat about the processed information
             queries_and_expectations = [
