@@ -16,60 +16,43 @@ Usage:
 """
 
 import argparse
-import logging
 import sys
 from pathlib import Path
 from memory_manager import MemoryManager
 from markdown_processor import MarkdownProcessor
+from logging_config import get_logger, log_exception
+from logging_decorators import log_function_calls, log_performance, log_exceptions
 
 
+@log_exceptions("Logging setup failed", reraise=False)
 def setup_logging(config_path: str = "config.json"):
     """
     Setup logging based on configuration.
-    
+
+    Note: This function is now deprecated as logging is handled by logging_config.py
+    It's kept for backward compatibility but the new logging system is automatically
+    initialized when any module imports from logging_config.
+
     Args
     ----
-    config_path: Path to configuration file
+    config_path: Path to configuration file (ignored in new system)
     """
-    try:
-        import json
-        with open(config_path, 'r') as f:
-            config = json.load(f)
-        
-        log_config = config.get('logging', {})
-        level = getattr(logging, log_config.get('level', 'INFO'))
-        log_format = log_config.get('format', '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        log_file = log_config.get('file', 'memory_app.log')
-        
-        # Setup logging with both file and console handlers
-        logging.basicConfig(
-            level=level,
-            format=log_format,
-            handlers=[
-                logging.FileHandler(log_file),
-                logging.StreamHandler(sys.stdout)
-            ]
-        )
-        
-    except Exception as e:
-        # Fallback logging setup
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            handlers=[logging.StreamHandler(sys.stdout)]
-        )
-        logging.warning(f"Could not load logging config: {e}")
+    logger = get_logger(__name__)
+    logger.info("Logging system already initialized by logging_config.py")
+    logger.info("This setup_logging function is deprecated but kept for compatibility")
 
 
+@log_performance(threshold_seconds=30.0)
+@log_exceptions("Process command failed")
 def process_command(args):
     """
     Process markdown files and create memories.
-    
+
     Args
     ----
     args: Parsed command line arguments
     """
-    logger = logging.getLogger(__name__)
+    logger = get_logger(__name__)
     
     try:
         # Initialize memory manager
@@ -99,15 +82,16 @@ def process_command(args):
         sys.exit(1)
 
 
+@log_exceptions("Chat command failed")
 def chat_command(args):
     """
     Start interactive chat with memories.
-    
+
     Args
     ----
     args: Parsed command line arguments
     """
-    logger = logging.getLogger(__name__)
+    logger = get_logger(__name__)
     
     try:
         # Initialize memory manager
@@ -181,15 +165,16 @@ def chat_command(args):
         sys.exit(1)
 
 
+@log_exceptions("Reset command failed")
 def reset_command(args):
     """
     Reset all memories for a user.
-    
+
     Args
     ----
     args: Parsed command line arguments
     """
-    logger = logging.getLogger(__name__)
+    logger = get_logger(__name__)
     
     try:
         # Initialize memory manager

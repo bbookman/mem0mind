@@ -99,6 +99,9 @@ def main():
     elif args.module == 'integration':
         cmd.append('tests/test_integration.py')
         description = "Integration tests"
+    elif args.module == 'logging':
+        cmd.append('tests/test_logging_system.py')
+        description = "Logging system tests"
     else:
         cmd.append('tests/')
         description = "All tests"

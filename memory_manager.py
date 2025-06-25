@@ -7,11 +7,12 @@ including initialization, adding memories, searching, and chat functionality.
 
 import json
 import time
-import logging
 import requests
 from typing import Dict, Any, List, Optional
 from mem0 import Memory
 from pathlib import Path
+from logging_config import get_logger, log_exception
+from logging_decorators import log_function_calls, log_performance, log_exceptions, log_retry_attempts
 
 
 class MemoryManager:
@@ -35,37 +36,39 @@ class MemoryManager:
         >>> response = manager.chat("What does Bruce like to eat?", "bruce")
     """
     
+    @log_function_calls(include_params=True, include_result=False)
     def __init__(self, config_path: str):
         """
         Initialize MemoryManager with configuration.
-        
+
         Args
         ----
         config_path: Path to the JSON configuration file
-        
+
         Raises
         ------
         FileNotFoundError: If config file doesn't exist
         ValueError: If config is invalid
         """
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
         self.config = self._load_config(config_path)
         self.memory = None
         self.user_id = self.config.get('processing_options', {}).get('user_id', 'default')
         self._initialize_memory()
     
+    @log_exceptions("Configuration loading failed")
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         """
         Load configuration from JSON file.
-        
+
         Args
         ----
         config_path: Path to configuration file
-        
+
         Returns
         -------
         Configuration dictionary
-        
+
         Raises
         ------
         FileNotFoundError: If config file doesn't exist
@@ -77,14 +80,18 @@ class MemoryManager:
             self.logger.info(f"Configuration loaded from {config_path}")
             return config
         except FileNotFoundError:
+            self.logger.error(f"Configuration file not found: {config_path}")
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
         except json.JSONDecodeError as e:
+            self.logger.error(f"Invalid JSON in configuration file: {e}")
             raise ValueError(f"Invalid JSON in configuration file: {e}")
     
+    @log_exceptions("Memory initialization failed")
+    @log_performance(threshold_seconds=2.0)
     def _initialize_memory(self):
         """
         Initialize the mem0 Memory instance.
-        
+
         Raises
         ------
         RuntimeError: If memory initialization fails
@@ -96,9 +103,12 @@ class MemoryManager:
         except Exception as e:
             error_msg = f"Failed to initialize memory: {e}"
             self.logger.error(error_msg)
+            log_exception(self.logger, e, "Memory initialization")
             raise RuntimeError(error_msg)
     
-    def add_fact(self, fact: str, user_id: Optional[str] = None, 
+    @log_retry_attempts(max_attempts=3, delay_seconds=2.0)
+    @log_performance(threshold_seconds=5.0)
+    def add_fact(self, fact: str, user_id: Optional[str] = None,
                  metadata: Optional[Dict] = None, max_retries: int = 3) -> Optional[Dict]:
         """
         Add a fact to memory with retry logic.

@@ -7,12 +7,13 @@ and using LLM to extract factual statements for memory creation.
 
 import re
 import time
-import logging
 import requests
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from memory_manager import MemoryManager
+from logging_config import get_logger, log_exception
+from logging_decorators import log_function_calls, log_performance, log_exceptions
 
 
 class MarkdownProcessor:
@@ -35,17 +36,18 @@ class MarkdownProcessor:
         >>> print(f"Added {added} facts from {total} extracted")
     """
     
+    @log_function_calls(include_params=False, include_result=False)
     def __init__(self, memory_manager: MemoryManager):
         """
         Initialize MarkdownProcessor.
-        
+
         Args
         ----
         memory_manager: MemoryManager instance for storing extracted facts
         """
         self.memory_manager = memory_manager
         self.config = memory_manager.config
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
     
     def parse_date(self, date_str: str) -> Optional[datetime]:
         """
@@ -247,6 +249,8 @@ Output only the extracted facts, one per line, with no additional text or explan
             self.logger.error(f"Error extracting facts with LLM: {e}")
             return []
 
+    @log_performance(threshold_seconds=10.0)
+    @log_exceptions("Markdown file processing failed")
     def process_file(self, file_path: str, user_id: Optional[str] = None) -> Tuple[int, int]:
         """
         Process a markdown file and extract memories.
