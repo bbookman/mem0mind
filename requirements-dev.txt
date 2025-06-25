@@ -4,7 +4,3 @@ pytest-cov>=4.0.0
 pytest-mock>=3.10.0
 pytest-xdist>=3.0.0
 
-# Core application dependencies (should match main requirements)
-mem0ai
-requests
-pathlib
