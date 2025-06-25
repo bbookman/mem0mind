@@ -1,0 +1,57 @@
+# Byte-compiled / optimized / DLL files
+
+
+.DS_Store
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Installer logs
+env/
+*.log
+
+# Virtual environments
+venv/
+ENV/
+.env
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Pytest
+.cache/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+
+# Pyre
+.pyre/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db

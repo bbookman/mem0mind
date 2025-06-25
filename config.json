@@ -1,0 +1,51 @@
+{
+  "memory_config": {
+    "vector_store": {
+      "provider": "qdrant",
+      "config": {
+        "collection_name": "unified_memories",
+        "host": "localhost",
+        "port": 6333,
+        "embedding_model_dims": 768
+      }
+    },
+    "llm": {
+      "provider": "ollama",
+      "config": {
+        "model": "llama3.1:latest",
+        "temperature": 0.1,
+        "max_tokens": 2000,
+        "ollama_base_url": "http://localhost:11434"
+      }
+    },
+    "embedder": {
+      "provider": "ollama",
+      "config": {
+        "model": "nomic-embed-text:latest",
+        "ollama_base_url": "http://localhost:11434"
+      }
+    }
+  },
+  "markdown_directories": [
+    "/Users/brucebookman/Documents/conversations",
+    "/Users/brucebookman/Documents/notes",
+    "/Users/brucebookman/Documents/journal"
+  ],
+  "processing_options": {
+    "recursive": true,
+    "file_extensions": [".md", ".markdown"],
+    "user_id": "bruce",
+    "batch_size": 10,
+    "delay_between_batches": 1.0
+  },
+  "chat_options": {
+    "temperature": 0.7,
+    "max_context_memories": 5,
+    "response_timeout": 60
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "memory_app.log",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  }
+}
