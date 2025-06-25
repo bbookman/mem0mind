@@ -1,7 +1,8 @@
-# Byte-compiled / optimized / DLL files
-
-
 .DS_Store
+venv/
+*.log
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -11,47 +12,38 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+env/
 build/
 dist/
 *.egg-info/
 *.egg
 
 # Installer logs
-env/
-*.log
+env.log
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Virtual environments
-venv/
-ENV/
-.env
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+*.cover
+*.py,cover
+.hypothesis/
 
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# Pytest
-.cache/
+# pyenv
+.python-version
 
-# MyPy
+# mypy
 .mypy_cache/
 .dmypy.json
 
 # Pyre
 .pyre/
 
-# Coverage reports
-htmlcov/
-.coverage
-.coverage.*
-.cache
-
-# PyCharm
-.idea/
-
-# VS Code
-.vscode/
-
-# macOS
-.DS_Store
-
-# Windows
-Thumbs.db
+# Cython debug symbols
+cython_debug/

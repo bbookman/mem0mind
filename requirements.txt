@@ -1,1 +1,3 @@
 requests
+mem0ai
+pathlib

@@ -1,0 +1,49 @@
+{
+  "memory_config": {
+    "vector_store": {
+      "provider": "qdrant",
+      "config": {
+        "collection_name": "test_memories",
+        "host": "localhost",
+        "port": 6333,
+        "embedding_model_dims": 768
+      }
+    },
+    "llm": {
+      "provider": "ollama",
+      "config": {
+        "model": "llama3.1:latest",
+        "temperature": 0.1,
+        "max_tokens": 2000,
+        "ollama_base_url": "http://localhost:11434"
+      }
+    },
+    "embedder": {
+      "provider": "ollama",
+      "config": {
+        "model": "nomic-embed-text:latest",
+        "ollama_base_url": "http://localhost:11434"
+      }
+    }
+  },
+  "markdown_directories": [
+    "/tmp/test_markdown"
+  ],
+  "processing_options": {
+    "recursive": true,
+    "file_extensions": [".md", ".markdown"],
+    "user_id": "test_user",
+    "batch_size": 5,
+    "delay_between_batches": 0.1
+  },
+  "chat_options": {
+    "temperature": 0.7,
+    "max_context_memories": 3,
+    "response_timeout": 30
+  },
+  "logging": {
+    "level": "WARNING",
+    "file": "test_memory_app.log",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  }
+}
