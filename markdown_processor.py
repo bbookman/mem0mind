@@ -14,6 +14,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from memory_manager import MemoryManager
 from logging_config import get_logger, log_exception
 from logging_decorators import log_function_calls, log_performance, log_exceptions
+from prompt_manager import get_prompt
 
 
 class MarkdownProcessor:
@@ -219,23 +220,16 @@ class MarkdownProcessor:
         if timestamp:
             time_context = f"This information was recorded on {timestamp.strftime('%B %d, %Y at %I:%M %p')}."
         
-        # Create prompt for the LLM
-        prompt = f"""Extract discrete, factual statements from the following conversation text.
-Context: {context}
-{time_context}
-
-Conversation text:
-"{content}"
-
-Instructions:
-1. Extract 1-5 clear, factual statements from the text
-2. Format each as a complete sentence with a subject
-3. Include the date/time context in the fact when relevant
-4. For multilingual content, preserve the original language
-5. Focus on personal details, preferences, events, and relationships
-6. Ignore small talk, greetings, or irrelevant details
-
-Output only the extracted facts, one per line, with no additional text or explanations:"""
+        # Get fact extraction prompt from prompt manager
+        try:
+            prompt = get_prompt('extraction', 'markdown_facts',
+                              context=context,
+                              time_context=time_context,
+                              content=content)
+        except Exception as e:
+            self.logger.error(f"Failed to load extraction prompt: {e}")
+            # Fallback to basic extraction
+            prompt = f"Extract key facts from: {content}"
 
         try:
             # Use the memory manager's Ollama API call method

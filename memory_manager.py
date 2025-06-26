@@ -13,6 +13,7 @@ from mem0 import Memory
 from pathlib import Path
 from logging_config import get_logger, log_exception
 from logging_decorators import log_function_calls, log_performance, log_exceptions, log_retry_attempts
+from prompt_manager import get_prompt
 
 
 class MemoryManager:
@@ -106,9 +107,7 @@ class MemoryManager:
             log_exception(self.logger, e, "Memory initialization")
             raise RuntimeError(error_msg)
     
-    @log_retry_attempts(max_attempts=3, delay_seconds=2.0)
-    @log_performance(threshold_seconds=5.0)
-    def add_fact(self, fact: str, user_id: Optional[str] = None,
+    def add_fact(self, fact: str, user_id: Optional[str] = None, 
                  metadata: Optional[Dict] = None, max_retries: int = 3) -> Optional[Dict]:
         """
         Add a fact to memory with retry logic.
@@ -281,26 +280,22 @@ class MemoryManager:
                 self.logger.debug(f"Found {len(memory_facts)} relevant memories")
                 context = f"Facts about {user_id}:\n" + "\n".join(f"• {fact}" for fact in memory_facts)
 
-            # Create improved prompt
-            prompt = f"""You are a helpful personal assistant for {user_id}. You have access to the following facts about {user_id}:
-
-{context}
-
-IMPORTANT INSTRUCTIONS:
-- When the user says "I", "me", "my", or "mine", they are referring to {user_id}
-- Use the facts above to answer questions confidently when the information is available
-- Connect related concepts (e.g., "favorite food" relates to "what I like to eat")
-- Give natural, conversational responses as if you know {user_id} personally
-- Only say you don't know if the facts truly don't contain relevant information
-
-Examples of how to handle pronouns:
-- "What do I like?" → "What does {user_id} like?"
-- "What's my favorite?" → "What's {user_id}'s favorite?"
-- "Tell me about myself" → "Tell me about {user_id}"
-
-User question: {query}
-
-Provide a helpful, natural response based on the available facts:"""
+            # Get chat prompt from prompt manager
+            try:
+                prompt = get_prompt('chat', 'user_interaction',
+                                  user_id=user_id,
+                                  context=context,
+                                  query=query)
+            except Exception as e:
+                self.logger.error(f"Failed to load chat prompt: {e}")
+                # Fallback to error response prompt
+                try:
+                    prompt = get_prompt('chat', 'error_response',
+                                      query=query,
+                                      error_message=str(e))
+                except Exception:
+                    # Ultimate fallback
+                    prompt = f"I apologize, but I'm having trouble processing your request: {query}"
 
             # Get LLM response using direct Ollama API
             return self._call_ollama_api(prompt)

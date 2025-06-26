@@ -1,0 +1,17 @@
+Validate the following extracted data for quality and accuracy.
+
+Data to validate: ${data}
+Validation criteria: ${criteria}
+Expected format: ${format}
+
+Validation checklist:
+1. Are the facts clearly stated and unambiguous?
+2. Do the facts contain specific, actionable information?
+3. Are there any contradictions or inconsistencies?
+4. Is the language clear and professional?
+5. Are temporal references properly formatted?
+
+Provide validation results in the following format:
+- VALID: [list valid facts]
+- INVALID: [list invalid facts with reasons]
+- SUGGESTIONS: [improvement suggestions]

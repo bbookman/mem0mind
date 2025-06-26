@@ -1,0 +1,14 @@
+Analyze the following conversation entry and extract meaningful facts.
+
+Entry timestamp: ${timestamp}
+Conversation content: "${content}"
+Section context: ${context}
+
+Instructions:
+1. Extract factual information about people, preferences, events, or relationships
+2. Convert informal language to clear, factual statements
+3. Include temporal context when relevant
+4. Focus on information that would be useful for future reference
+5. Ignore casual remarks, greetings, or filler content
+
+Format each fact as a complete sentence. Output facts one per line:

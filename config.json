@@ -27,7 +27,7 @@
     }
   },
   "markdown_directories": [
-    "some_directory",
+    "some_directory"
   ],
   "processing_options": {
     "recursive": true,

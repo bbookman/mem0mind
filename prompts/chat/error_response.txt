@@ -1,0 +1,10 @@
+I apologize, but I encountered an error while processing your request: "${query}"
+
+Error details: ${error_message}
+
+Please try:
+- Rephrasing your question
+- Asking about a different topic
+- Checking if the memory system is properly configured
+
+If the problem persists, please contact support with the error details above.

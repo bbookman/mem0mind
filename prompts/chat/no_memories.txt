@@ -1,0 +1,8 @@
+I don't have any specific information about ${user_id} related to your question: "${query}"
+
+To help me provide better responses, you could:
+- Add some facts about yourself by processing markdown files
+- Tell me more about your preferences and experiences
+- Ask questions about topics where I might have information
+
+Is there anything else I can help you with?
