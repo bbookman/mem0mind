@@ -21,3 +21,13 @@ Lifeboard is open source out of the gate and made to run on your computer and no
 /supporting documents/
 /supporting documents/Design/Plan.md
 - [UseCortex](https://usecortex.ai/)
+
+## Contributing
+- The repository now has a Discussions tab, use it
+- Fork
+- Create your feature branch (git checkout -b my-new-feature)
+- Commit your changes (git commit -am 'Add some feature')
+- Run codesmell review, as deep as possible
+- Ensure absraction
+- Add pytests for feature in /tests/ .. must all pass
+- Run ALL tests prior to PR ..  must all pass
