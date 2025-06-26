@@ -15,7 +15,9 @@ Lifeboard is open source out of the gate and made to run on your computer and no
 - Novice facing if at all possible
 - Leverage both AI and non-AI solutions (example nltk)
 - Extreme modularity and extensability: future-proof design.  Today mem0, tomorrow Langchain.. today SQLlite, tomorrow Postgres
+- Extreme abstracion and encapsulation
 
-### Random "thoughts"
-- see /supporting documents
+## Resources and MUST reads
+/supporting documents/
+/supporting documents/Design/Plan.md
 - [UseCortex](https://usecortex.ai/)
