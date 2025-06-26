@@ -1,0 +1,15 @@
+Analyze the following system error and provide diagnostic information.
+
+Error message: ${error_message}
+System state: ${system_state}
+Operation: ${operation}
+Timestamp: ${timestamp}
+
+Analysis framework:
+1. Error classification (connection, configuration, data, logic)
+2. Potential root causes
+3. Impact assessment
+4. Recommended resolution steps
+5. Prevention strategies
+
+Provide a structured analysis with clear recommendations for resolution.

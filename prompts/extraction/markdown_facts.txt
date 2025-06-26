@@ -1,0 +1,16 @@
+Extract discrete, factual statements from the following conversation text.
+Context: ${context}
+${time_context}
+
+Conversation text:
+"${content}"
+
+Instructions:
+1. Extract 1-5 clear, factual statements from the text
+2. Format each as a complete sentence with a subject
+3. Include the date/time context in the fact when relevant
+4. For multilingual content, preserve the original language
+5. Focus on personal details, preferences, events, and relationships
+6. Ignore small talk, greetings, or irrelevant details
+
+Output only the extracted facts, one per line, with no additional text or explanations:
