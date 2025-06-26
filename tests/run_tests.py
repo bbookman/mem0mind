@@ -61,7 +61,7 @@ def main():
     
     parser.add_argument('--coverage', '-c', action='store_true',
                        help='Run tests with coverage reporting')
-    parser.add_argument('--module', '-m', choices=['memory', 'markdown', 'app', 'integration', 'logging'],
+    parser.add_argument('--module', '-m', choices=['memory', 'markdown', 'app', 'integration', 'logging', 'prompts'],
                        help='Run tests for specific module only')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Run tests with verbose output')
@@ -99,6 +99,12 @@ def main():
     elif args.module == 'integration':
         cmd.append('tests/test_integration.py')
         description = "Integration tests"
+    elif args.module == 'logging':
+        cmd.append('tests/test_logging_system.py')
+        description = "Logging system tests"
+    elif args.module == 'prompts':
+        cmd.append('tests/test_prompt_manager.py')
+        description = "Prompt management tests"
     else:
         cmd.append('tests/')
         description = "All tests"
