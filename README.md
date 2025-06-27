@@ -24,6 +24,7 @@ Lifeboard is open source out of the gate and made to run on your computer and no
 
 ## Contributing
 - The repository now has a Discussions tab, use it
+- Need user's credentials?  The live in secrets.json (secrets.example.json)
 - Fork
 - Create your feature branch (git checkout -b my-new-feature)
 - Run codesmell review, as deep as possible
