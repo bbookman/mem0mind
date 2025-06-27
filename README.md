@@ -26,8 +26,9 @@ Lifeboard is open source out of the gate and made to run on your computer and no
 - The repository now has a Discussions tab, use it
 - Fork
 - Create your feature branch (git checkout -b my-new-feature)
-- Commit your changes (git commit -am 'Add some feature')
 - Run codesmell review, as deep as possible
-- Ensure absraction
-- Add pytests for feature in /tests/ .. must all pass
-- Run ALL tests prior to PR ..  must all pass
+- Lint (black, isort, flake8)
+- Docstrings on all classes and methods
+- Ensure abstraction
+- Add pytests for the feature in /tests/ .. all must pass
+- Run ALL tests prior to PR ..  all must pass
