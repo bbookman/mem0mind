@@ -1,3 +1,5 @@
 requests
 mem0ai
 pathlib
+ollama
+

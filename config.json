@@ -4,8 +4,7 @@
       "provider": "qdrant",
       "config": {
         "collection_name": "unified_memories",
-        "host": "localhost",
-        "port": 6333,
+        "host": "host.docker.internal",
         "embedding_model_dims": 768
       }
     },
@@ -15,20 +14,18 @@
         "model": "llama3.1:latest",
         "temperature": 0.1,
         "max_tokens": 2000,
-        "ollama_base_url": "http://localhost:11434"
+        "ollama_base_url": "http://host.docker.internal:11434"
       }
     },
     "embedder": {
       "provider": "ollama",
       "config": {
         "model": "nomic-embed-text:latest",
-        "ollama_base_url": "http://localhost:11434"
+        "ollama_base_url": "http://host.docker.internal:11434"
       }
     }
   },
-  "markdown_directories": [
-    "some_directory"
-  ],
+  "markdown_directories": ["/app/data_to_process"],
   "processing_options": {
     "recursive": true,
     "file_extensions": [".md", ".markdown"],
@@ -50,6 +47,6 @@
       "when": "midnight",
       "interval": 1
     },
-    "format": "%(asctime)s | %(name)s | %(levelname)s | %(filename)s:%(lineno)d | %(funcName)s | %(message)s"
+    "format": "%s | %s | %s | %s:%s | %s | %s"
   }
 }
