@@ -145,7 +145,19 @@ class MarkdownProcessor:
                 'header': current_section['header'],
                 'content': '\n'.join(current_content)
             })
-        
+        # If no sections were found (e.g., no headers), treat the whole file as one section
+        elif not sections and markdown_text.strip():
+            # Try to get a filename for the header, fallback to "General Facts"
+            # This part is a bit tricky as extract_sections only gets text.
+            # We'll rely on a placeholder or a more generic approach for now.
+            # A better solution might involve passing the filename to this function.
+            # For now, let's use a generic header.
+            sections.append({
+                'level': 0, # Indicates no specific header level
+                'header': "General Facts from File",
+                'content': markdown_text.strip()
+            })
+
         return sections
     
     def extract_conversation_entries(self, section_content: str) -> List[Dict[str, Any]]:
@@ -192,6 +204,19 @@ class MarkdownProcessor:
                 'content': content
             })
         
+        # If no entries were extracted using the timestamped bullet point pattern,
+        # and the section content is not empty, treat each line as an entry.
+        if not entries and section_content.strip():
+            lines = section_content.strip().split('\n')
+            for line in lines:
+                line_content = line.strip()
+                if line_content: # Ensure the line is not empty
+                    entries.append({
+                        'timestamp': None, # No timestamp for these types of entries
+                        'content': line_content
+                    })
+            self.logger.info(f"No bullet-point entries found; processed {len(lines)} lines as individual entries.")
+
         return entries
     
     def extract_facts_with_llm(self, context: str, content: str, 
