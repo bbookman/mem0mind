@@ -82,6 +82,7 @@ n8n supports several external development approaches:
 - Clear separation of concerns between components
 
 
+
 I recommend **PostgreSQL** for your MVP because:
 
-use postgresql
+
