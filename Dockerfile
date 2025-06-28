@@ -13,5 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code to the working directory
 COPY . .
 
-# Default command to run the application (e.g., show help)
-CMD ["python", "memory_app.py", "--help"]
+# Make the script executable
+RUN chmod +x memory_app.py
+
+# Set the entrypoint to the python interpreter and our script
+ENTRYPOINT ["python", "./memory_app.py"]
