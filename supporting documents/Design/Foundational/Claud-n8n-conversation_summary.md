@@ -80,3 +80,9 @@ n8n supports several external development approaches:
 - AI code generation works well across entire stack
 - Scalable foundation for future enhancements
 - Clear separation of concerns between components
+
+
+
+I recommend **PostgreSQL** for your MVP because:
+
+
