@@ -1,0 +1,97 @@
+.daily-newspaper-view {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    min-height: 100vh;
+}
+
+.daily-newspaper-view-empty,
+.daily-newspaper-view-loading,
+.daily-newspaper-view-error {
+    text-align: center;
+    font-size: 1.2em;
+    padding: 50px;
+    color: #555;
+}
+.daily-newspaper-view-error {
+    color: red;
+}
+
+
+.back-button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-bottom: 20px;
+}
+
+.back-button:hover {
+    background-color: #5a6268;
+}
+
+.view-title {
+    color: #333;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.daily-summary-module {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.daily-summary-module h3 {
+    color: #007bff;
+    margin-top: 0;
+}
+
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.module {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.module h3 {
+    margin-top: 0;
+    color: #495057;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.module p {
+    font-size: 0.95em;
+    line-height: 1.6;
+    color: #555;
+}
+
+/* Specific module styling based on PRD fixed layout (shapes) */
+/* MVP uses fixed positions for 3 shapes: Limitless (Vertical Rect), Bee (Vertical Rect), Mood (Square), Weather (Square) */
+/* For a simple grid, we can just ensure they have enough content or min-height */
+
+.limitless-module, .bee-module {
+    /* Consider aspect ratio or specific height for "vertical rectangle" */
+    min-height: 200px;
+}
+
+.mood-module, .weather-module {
+    /* Consider aspect ratio or specific height/width for "small square" */
+    min-height: 150px;
+}

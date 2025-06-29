@@ -1,0 +1,98 @@
+{
+  "name": "Ingest Weather Data",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rule": "0 2 * * *",
+        "timezone": "America/New_York"
+      },
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ],
+      "id": "g2c8a7f9-2029-4a68-8138-933f178ba7to"
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast?latitude={{ $env.USER_LATITUDE || '52.52' }}&longitude={{ $env.USER_LONGITUDE || '13.41' }}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto",
+        "options": {}
+      },
+      "name": "Fetch Weather Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ],
+      "id": "c3b8a7f9-2029-4a68-8138-933f178ba7ta"
+    },
+    {
+      "parameters": {
+        "command": "python /opt/lifeboard_scripts/mem0_handler.py add '{{ JSON.stringify($json) }}'",
+        "options": {
+          "shell": true,
+          "env": {
+            "QDRANT_HOST": "{{ $env.QDRANT_HOST || 'localhost' }}",
+            "QDRANT_PORT": "{{ $env.QDRANT_PORT || 6333 }}",
+            "OLLAMA_BASE_URL": "{{ $env.OLLAMA_BASE_URL || 'http://localhost:11434' }}",
+            "OLLAMA_LLM_MODEL": "{{ $env.OLLAMA_LLM_MODEL || 'llama3.1' }}",
+            "OLLAMA_EMBEDDER_MODEL": "{{ $env.OLLAMA_EMBEDDER_MODEL || 'nomic-embed-text' }}"
+          }
+        }
+      },
+      "name": "Store Weather in Mem0",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ],
+      "notes": "Payload to script: {\"user_id\": \"lifeboard_user\", \"data\": {...weather_data...}, \"metadata\": {\"source\": \"weather\", \"date\": \"{{ $now.toFormat('yyyy-MM-dd') }}\"}}",
+      "id": "e4d8a7f9-2029-4a68-8138-933f178ba7tb"
+    }
+  ],
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Weather Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Weather Data": {
+      "main": [
+        [
+          {
+            "node": "Store Weather in Mem0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "3",
+  "meta": {
+    "instanceId": "placeholder_instance_id"
+  },
+  "pinData": {}
+}

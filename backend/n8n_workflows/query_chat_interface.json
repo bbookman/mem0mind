@@ -1,0 +1,100 @@
+{
+  "name": "Query Chat Interface",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "path": "{{ $env.CHAT_WEBHOOK_PATH || 'webhook-chat' }}",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Chat Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ],
+      "webhookId": "{{ $env.CHAT_WEBHOOK_ID || 'placeholder-chat-webhook-id' }}",
+      "id": "j2c8a7f9-5029-4a68-8138-933f178ba7to"
+    },
+    {
+      "parameters": {
+        "command": "python /opt/lifeboard_scripts/mem0_handler.py search '{{ JSON.stringify($json.body) }}'",
+        "options": {
+          "shell": true,
+          "env": {
+            "QDRANT_HOST": "{{ $env.QDRANT_HOST || 'localhost' }}",
+            "QDRANT_PORT": "{{ $env.QDRANT_PORT || 6333 }}",
+            "OLLAMA_BASE_URL": "{{ $env.OLLAMA_BASE_URL || 'http://localhost:11434' }}",
+            "OLLAMA_LLM_MODEL": "{{ $env.OLLAMA_LLM_MODEL || 'llama3.1' }}",
+            "OLLAMA_EMBEDDER_MODEL": "{{ $env.OLLAMA_EMBEDDER_MODEL || 'nomic-embed-text' }}"
+          }
+        }
+      },
+      "name": "Search Mem0 via Chat",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [ 650, 300 ],
+      "notes": "Webhook body should contain user_id and the query string. Script payload: {\"user_id\": \"lifeboard_user\", \"query\": \"user's chat message\"}",
+      "id": "k4d8a7f9-5029-4a68-8138-933f178ba7tb"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare context from search results for the LLM\nconst searchResults = $json.results || []; // Assuming 'results' is the array from mem0 search\nconst contextMemories = searchResults.map(mem => {\n  // Extract relevant text from memory. Adjust based on actual memory structure.\n  if (mem.text) return mem.text;\n  if (mem.payload && mem.payload.data) return JSON.stringify(mem.payload.data);\n  return JSON.stringify(mem);\n});\n$json.contextForLLM = contextMemories;\n// Pass through the original user query from the webhook trigger step\n$json.originalUserQuery = $('Chat Webhook Trigger').item.json.body.query;\n$json.userId = $('Chat Webhook Trigger').item.json.body.user_id || 'lifeboard_user';\nreturn $json;"
+      },
+      "name": "Format Search Results for LLM",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [ 850, 300 ],
+      "id": "chat_format_context"
+    },
+    {
+      "parameters": {
+        "command": "python /opt/lifeboard_scripts/mem0_handler.py generate_chat_response '{{ JSON.stringify({ \"user_id\": $json.userId, \"query\": $json.originalUserQuery, \"context\": $json.contextForLLM }) }}'",
+        "options": {
+          "shell": true,
+          "env": {
+            "OLLAMA_BASE_URL": "{{ $env.OLLAMA_BASE_URL || 'http://localhost:11434' }}",
+            "OLLAMA_LLM_MODEL": "{{ $env.OLLAMA_LLM_MODEL || 'llama3.1' }}"
+          }
+        }
+      },
+      "name": "Generate LLM Chat Response",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [ 1050, 300 ],
+      "id": "chat_gen_llm_resp"
+    },
+    {
+      "parameters": { "options": {} },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [ 1250, 300 ],
+      "id": "l4d8a7f9-5029-4a68-8138-933f178ba7tc"
+    }
+  ],
+  "connections": {
+    "Chat Webhook Trigger": { "main": [ [ { "node": "Search Mem0 via Chat", "type": "main", "index": 0 } ] ] },
+    "Search Mem0 via Chat": { "main": [ [ { "node": "Format Search Results for LLM", "type": "main", "index": 0 } ] ] },
+    "Format Search Results for LLM": { "main": [ [ { "node": "Generate LLM Chat Response", "type": "main", "index": 0 } ] ] },
+    "Generate LLM Chat Response": { "main": [ [ { "node": "Respond to Webhook", "type": "main", "index": 0 } ] ] }
+  },
+  "active": false,
+  "settings": {},
+  "id": "6",
+  "meta": {
+    "instanceId": "placeholder_instance_id"
+  },
+  "pinData": {}
+}

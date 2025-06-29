@@ -1,0 +1,93 @@
+{
+  "name": "Generate Daily Summary",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [ 250, 300 ]
+    },
+    {
+      "parameters": {
+        "path": "{{ $env.DAILY_SUMMARY_WEBHOOK_PATH || 'webhook-daily-summary' }}",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [ 450, 300 ],
+      "webhookId": "{{ $env.DAILY_SUMMARY_WEBHOOK_ID || 'placeholder-daily-summary-webhook-id' }}",
+      "id": "smmry_wh_trigger"
+    },
+    {
+      "parameters": {
+        "command": "python /opt/lifeboard_scripts/mem0_handler.py search '{{ JSON.stringify({ \"user_id\": $json.body.user_id || \"lifeboard_user\", \"query\": \"Entries for date: \" + ($json.body.date || $now.toFormat('yyyy-MM-dd')) }) }}'",
+        "options": {
+          "shell": true,
+          "env": {
+            "QDRANT_HOST": "{{ $env.QDRANT_HOST || 'localhost' }}",
+            "QDRANT_PORT": "{{ $env.QDRANT_PORT || 6333 }}",
+            "OLLAMA_BASE_URL": "{{ $env.OLLAMA_BASE_URL || 'http://localhost:11434' }}",
+            "OLLAMA_LLM_MODEL": "{{ $env.OLLAMA_LLM_MODEL || 'llama3.1' }}",
+            "OLLAMA_EMBEDDER_MODEL": "{{ $env.OLLAMA_EMBEDDER_MODEL || 'nomic-embed-text' }}"
+          }
+        }
+      },
+      "name": "Fetch Daily Memories",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [ 650, 300 ],
+      "id": "smmry_fetch_mem"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine results from Mem0 into a single text block for summarization\nconst items = $json.results; // Assuming results is an array of memory objects\nlet combinedText = '';\nif (Array.isArray(items)) {\n  items.forEach(item => {\n    // Adjust based on actual memory structure from mem0 search\n    if (item.text) combinedText += item.text + '\\n\\n'; \n    else if (item.payload && item.payload.data) combinedText += JSON.stringify(item.payload.data) + '\\n\\n';\n    else combinedText += JSON.stringify(item) + '\\n\\n';\n  });\n}\n// If no memories, provide a default text or handle appropriately\nif (combinedText.trim() === '') {\n  $json.textForSummary = 'No specific activities or notes found for this day.';\n} else {\n  $json.textForSummary = combinedText.trim();\n}\nreturn $json;"
+      },
+      "name": "Format Memories for LLM",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [ 850, 300 ],
+      "id": "smmry_format_text"
+    },
+    {
+      "parameters": {
+        "command": "python /opt/lifeboard_scripts/mem0_handler.py summarize '{{ JSON.stringify({ \"user_id\": $json.body.user_id || \"lifeboard_user\", \"text\": $json.textForSummary, \"prompt\": \"Create a warm and reflective daily summary, like a personal newspaper highlight, based on the following notes and activities. Focus on meaningful interactions, productivity, and mood if available. Today's date is \" + ($json.body.date || $now.toFormat('yyyy-MM-dd')) + \".\"}) }}'",
+        "options": {
+          "shell": true,
+          "env": {
+            "OLLAMA_BASE_URL": "{{ $env.OLLAMA_BASE_URL || 'http://localhost:11434' }}",
+            "OLLAMA_LLM_MODEL": "{{ $env.OLLAMA_LLM_MODEL || 'llama3.1' }}"
+          }
+        }
+      },
+      "name": "Generate Summary with LLM",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [ 1050, 300 ],
+      "id": "smmry_gen_llm"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond with Summary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [ 1250, 300 ],
+      "id": "smmry_respond"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [ [ { "node": "Fetch Daily Memories", "type": "main", "index": 0 } ] ] },
+    "Fetch Daily Memories": { "main": [ [ { "node": "Format Memories for LLM", "type": "main", "index": 0 } ] ] },
+    "Format Memories for LLM": { "main": [ [ { "node": "Generate Summary with LLM", "type": "main", "index": 0 } ] ] },
+    "Generate Summary with LLM": { "main": [ [ { "node": "Respond with Summary", "type": "main", "index": 0 } ] ] }
+  },
+  "active": false,
+  "settings": {},
+  "id": "daily_summary_workflow",
+  "meta": { "instanceId": "placeholder_instance_id" },
+  "pinData": {}
+}

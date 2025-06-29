@@ -1,0 +1,185 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432" # Use from .env or default
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lifeboard_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-strongpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-lifeboard_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql # Initialize Lifeboard specific tables
+    networks:
+      - lifeboard_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lifeboard_user} -d ${POSTGRES_DB:-lifeboard_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+      - "6334:6334" # gRPC, if needed directly
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - lifeboard_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - lifeboard_net
+    # For GPU support, uncomment and configure (ensure Docker host supports it)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           capabilities: [gpu]
+    #           count: 1 # or "all"
+    tty: true # Keep container running
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s # Give Ollama more time to start and potentially pull models
+
+  n8n:
+    build:
+      context: ./backend/n8n_custom
+      # Dockerfile is backend/n8n_custom/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # n8n specific environment variables
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres # Service name of postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${N8N_DB_NAME:-n8n_lifeboard} # Separate DB for n8n itself
+      DB_POSTGRESDB_USER: ${N8N_DB_USER:-n8n_user}
+      DB_POSTGRESDB_PASSWORD: ${N8N_DB_PASSWORD:-n8n_password_secure}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-a_very_secure_random_encryption_key_change_me}
+      # GENERIC_TIMEZONE: Europe/Berlin # Set your timezone
+      # WEBHOOK_URL: http://localhost:5678/ # Base URL for webhooks if needed explicitly
+      # Pass other env vars needed by mem0_handler.py and workflows
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: ${QDRANT_PORT:-6333}
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_LLM_MODEL: ${OLLAMA_LLM_MODEL:-llama3.1}
+      OLLAMA_EMBEDDER_MODEL: ${OLLAMA_EMBEDDER_MODEL:-nomic-embed-text}
+      USER_LATITUDE: ${USER_LATITUDE:-52.52}
+      USER_LONGITUDE: ${USER_LONGITUDE:-13.41}
+      DEFAULT_USER_ID: ${DEFAULT_USER_ID:-lifeboard_user}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      # Mount workflow directory (optional, n8n can also import them)
+      # For development, this makes it easy to see workflow changes without rebuilding image
+      - ./backend/n8n_workflows:/home/node/.n8n/workflows
+      # Ensure script path in workflows is absolute: /opt/lifeboard_scripts/mem0_handler.py
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy # Wait for ollama to be somewhat ready
+    networks:
+      - lifeboard_net
+    # env_file: # If you have a .env file in the root for docker-compose
+    #   - ./config_lifeboard/.env # This would load variables for all services from this file if not overridden
+
+  frontend:
+    build:
+      context: ./frontend/react_app
+      # Dockerfile is frontend/react_app/Dockerfile
+    ports:
+      - "3000:80" # Map host 3000 to Nginx 80 in container
+    depends_on:
+      - n8n # Frontend might call n8n webhooks
+    networks:
+      - lifeboard_net
+    # For development, you might want to use the React dev server with hot reloading:
+    # command: yarn start
+    # volumes:
+    #   - ./frontend/react_app:/app
+    #   - /app/node_modules
+    # environment:
+    #   - CHOKIDAR_USEPOLLING=true # For better hot reloading in some Docker setups
+
+volumes:
+  postgres_data:
+  qdrant_data:
+  ollama_data:
+  n8n_data:
+
+networks:
+  lifeboard_net:
+    driver: bridge
+
+# Note: To use this docker-compose.yml:
+# 1. Copy config_lifeboard/config.example.env to config_lifeboard/.env (or project root .env)
+#    and fill in any necessary values (especially N8N_ENCRYPTION_KEY).
+#    Alternatively, set these environment variables in your shell.
+# 2. The n8n service uses different DB credentials (N8N_DB_USER, etc.) for its own database
+#    than the main Lifeboard app (POSTGRES_USER for init.sql). This is a good practice.
+#    Ensure the postgres service creates the n8n database or the n8n user has rights to create it.
+#    The init.sql in ./database/ currently only sets up tables for Lifeboard data, not n8n's own DB.
+#    n8n should create its own database if it doesn't exist, given the credentials.
+# 3. Ollama service: After starting, you might need to exec into the ollama container
+#    (docker-compose exec ollama bash) and run `ollama pull llama3.1` and
+#    `ollama pull nomic-embed-text` (or your chosen models) if they are not already present in the volume.
+#    Or, build a custom Ollama image with models pre-pulled.
+# 4. n8n workflows: Ensure they call `python /opt/lifeboard_scripts/mem0_handler.py ...` as per Dockerfile.
+#    The volume mount for workflows helps in development.
+# 5. React frontend: For production, it's built and served by Nginx.
+#    For development, the commented-out section shows how to run the React dev server.
+#    Proxying API requests from frontend (port 3000) to n8n (port 5678) might be needed
+#    (e.g. in package.json "proxy": "http://localhost:5678" or a custom Nginx config for the frontend service).
+#    The current setup assumes relative paths like /webhook-chat will be resolved by Nginx if it also proxies to n8n,
+#    or by the browser if n8n is on the same host/port (which it isn't here).
+#    A simple Nginx reverse proxy config for the frontend service would be beneficial.
+#    For MVP local deployment, if frontend calls n8n on localhost:5678, ensure CORS is handled by n8n or URLs are adjusted.
+#    The easiest for MVP is often to have frontend dev server proxy to n8n.
+#    The current frontend fetch calls use relative paths like /webhook-chat. This will only work if served from the same domain as n8n,
+#    or if a reverse proxy is configured for the frontend service to route these to n8n.
+#    For this step, I'll assume such a proxy or direct URL configuration will be handled outside this compose file for now,
+#    or the frontend code adjusted to use full URLs like http://localhost:5678/webhook-chat.
+#    The PRD mentions technical users for MVP, so they can manage this.
+#    I will update the fetch calls in React components to use an environment variable for the API base URL.
+
+```
+
+This `docker-compose.yml` defines:
+*   `postgres`: PostgreSQL database.
+*   `qdrant`: Qdrant vector store.
+*   `ollama`: Ollama for local LLMs.
+*   `n8n`: Custom n8n service built from `backend/n8n_custom/Dockerfile`. It includes environment variables for database connection, service URLs for Qdrant/Ollama, and mounts for persistent n8n data and workflows.
+*   `frontend`: React app built into static files and served by Nginx.
+
+**Key configurations and assumptions:**
+*   Uses environment variables (can be supplied via `.env` file or shell).
+*   n8n workflows have been updated to use `/opt/lifeboard_scripts/mem0_handler.py`.
+*   Persistent data using named volumes.
+*   A shared network `lifeboard_net` for service discovery.
+
+**Next: Update React fetch calls to use an environment variable for the API base URL.**
+The frontend components `DailyNewspaperView.js` and `ChatWidget.js` use relative paths like `/webhook-daily-summary`. This should be `http://localhost:5678/webhook-daily-summary` or similar, configurable via an environment variable like `REACT_APP_N8N_BASE_URL`.

@@ -1,0 +1,105 @@
+{
+  "name": "Ingest Bee Computer Data",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rule": "0 1 * * *",
+        "timezone": "America/New_York"
+      },
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ],
+      "id": "f2c8a7f9-1029-4a68-8138-933f178ba7to"
+    },
+    {
+      "parameters": {
+        "url": "{{ $credentials.beeApiUrl || 'https://api.bee.computer/v1/activities' }}",
+        "authentication": "headerAuth",
+        "headerAuth": {
+          "name": "X-Api-Key",
+          "value": "{{ $credentials.beeApiKey }}"
+        },
+        "options": {
+          "splitIntoItems": true
+        }
+      },
+      "name": "Fetch Bee Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ],
+      "id": "b3b8a7f9-1029-4a68-8138-933f178ba7ta"
+    },
+    {
+      "parameters": {
+        "command": "python /opt/lifeboard_scripts/mem0_handler.py add '{{ JSON.stringify($json) }}'",
+        "options": {
+          "shell": true,
+          "env": {
+            "QDRANT_HOST": "{{ $env.QDRANT_HOST || 'localhost' }}",
+            "QDRANT_PORT": "{{ $env.QDRANT_PORT || 6333 }}",
+            "OLLAMA_BASE_URL": "{{ $env.OLLAMA_BASE_URL || 'http://localhost:11434' }}",
+            "OLLAMA_LLM_MODEL": "{{ $env.OLLAMA_LLM_MODEL || 'llama3.1' }}",
+            "OLLAMA_EMBEDDER_MODEL": "{{ $env.OLLAMA_EMBEDDER_MODEL || 'nomic-embed-text' }}"
+          }
+        }
+      },
+      "name": "Store in Mem0",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ],
+      "notes": "Payload to script: {\"user_id\": \"lifeboard_user\", \"data\": {...bee_activity_data...}, \"metadata\": {\"source\": \"bee_computer\"}}",
+      "id": "d4d8a7f9-1029-4a68-8138-933f178ba7tb"
+    }
+  ],
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Bee Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Bee Data": {
+      "main": [
+        [
+          {
+            "node": "Store in Mem0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "2",
+  "meta": {
+    "instanceId": "placeholder_instance_id"
+  },
+  "pinData": {}
+}

@@ -1,0 +1,99 @@
+{
+  "name": "Ingest Mood Data",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "path": "{{ $env.MOOD_WEBHOOK_PATH || 'webhook-mood' }}",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Mood Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ],
+      "webhookId": "{{ $env.MOOD_WEBHOOK_ID || 'placeholder-mood-webhook-id' }}",
+      "id": "h2c8a7f9-3029-4a68-8138-933f178ba7to"
+    },
+    {
+      "parameters": {
+        "command": "python /opt/lifeboard_scripts/mem0_handler.py add '{{ JSON.stringify($json.body) }}'",
+        "options": {
+          "shell": true,
+          "env": {
+            "QDRANT_HOST": "{{ $env.QDRANT_HOST || 'localhost' }}",
+            "QDRANT_PORT": "{{ $env.QDRANT_PORT || 6333 }}",
+            "OLLAMA_BASE_URL": "{{ $env.OLLAMA_BASE_URL || 'http://localhost:11434' }}",
+            "OLLAMA_LLM_MODEL": "{{ $env.OLLAMA_LLM_MODEL || 'llama3.1' }}",
+            "OLLAMA_EMBEDDER_MODEL": "{{ $env.OLLAMA_EMBEDDER_MODEL || 'nomic-embed-text' }}"
+          }
+        }
+      },
+      "name": "Store Mood in Mem0",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ],
+      "notes": "Payload to script: {\"user_id\": \"lifeboard_user\", \"data\": {...mood_data_from_webhook...}, \"metadata\": {\"source\": \"mood\", \"timestamp\": \"{{ $now.toISO() }}\"}}",
+      "id": "f4d8a7f9-3029-4a68-8138-933f178ba7tb"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ],
+      "id": "g4d8a7f9-3029-4a68-8138-933f178ba7tc"
+    }
+  ],
+  "connections": {
+    "Mood Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Store Mood in Mem0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Mood in Mem0": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "4",
+  "meta": {
+    "instanceId": "placeholder_instance_id"
+  },
+  "pinData": {}
+}
